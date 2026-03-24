@@ -9,6 +9,8 @@
 - [Spin-Up Clusters \& Interact With Them](#spin-up-clusters--interact-with-them)
 - [Create a Namepsace](#create-a-namepsace)
   - [Example Namespace](#example-namespace)
+- [Deploying An Application](#deploying-an-application)
+  - [Creating Pods Using an Existing YAML Spec](#creating-pods-using-an-existing-yaml-spec)
 
 ## Get Started
 
@@ -243,3 +245,145 @@
   > namespace "development" deleted
   > namespace "production" deleted
   > ```
+
+[Go 🆙](#table-of-contents)
+
+## Deploying An Application
+
+- K8S is designed to make your applications highly available, meaning that there are multiple replicas of your application running at the same time, so that if one stops working, there are at least two others accepting traffic.
+- `Pods` are the k8s resource that run our applications and microservices, and one way to ensure that an application is highly available, is to organize your pods using a kubernetes deployment.
+
+### Creating Pods Using an Existing YAML Spec
+
+- You can find the following YAML spec in [`deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml)
+
+  ```yml
+  ---
+  apiVersion: apps/v1         # API group to which the requests are being sent to
+  kind: Deployment            # Kind of k8s object we want to create, which is "Deployment" object.
+  metadata:
+    name: pod-info-deployment # Name given to the deployment
+    namespace: development    # Namespace where the pods will be created at
+    labels:
+      app: pod-info           # Labelling all the pods in this group, with the app name as `pod-info`
+  spec:
+    replicas: 3               # How many replicas of the container we want to run is specified here
+    selector:
+      matchLabels:
+        app: pod-info
+    template:
+      metadata:
+        labels:
+          app: pod-info
+      spec:
+        containers:
+          - name: pod-info-container
+            image: kimschles/pod-info-app:latest    # Pulls the latest version of `pod-info-app`, and then directs traffic to port 3000
+            ports:
+              - ctonainerPort: 3000
+            env:
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.podIP
+  ```
+
+- Before creating the deployment, let's make sure that we've the `development` namespace:
+
+  ```sh
+  kubectl get ns # same as: kubectl get namespaces
+  ```
+
+- Create the `development` namespace using [`nameppace.yml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_02_Begin/namespace.yaml):
+
+  ```sh
+  kubectl apply -f /path/to/namespace.yaml
+  ```
+
+  You should see something like this:
+
+  > ```terminal
+  > namespace/development created
+  > ```
+
+- To run the deployment, simply do as follows:
+
+  ```sh
+  kubectl apply -f /path/deployment.yaml
+  ```
+
+  You should see something like:
+
+  > ```terminal
+  > deployment.apps/pod-info-deployment created
+  > ```
+
+- To confirm, list all the containers deployed in the `development` namespace:
+
+  ```sh
+  kubectl get deployments -n development        # -n: namespace
+  ```
+
+  Output should be:
+
+  > ```terminal
+  > NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+  > pod-info-deployment   3/3     3            3           91s
+  > ```
+
+- To check the pods created by the deployment, run:
+
+  ```sh
+  kubectl get pods -n development               # -n: namespace
+  ```
+
+  Output should be something like:
+
+  > ```terminal
+  > NAME                                   READY   STATUS              RESTARTS   AGE
+  > pod-info-deployment-64f9d5546f-6rqsw   0/1     ContainerCreating   0          5s
+  > pod-info-deployment-64f9d5546f-7n8ks   0/1     ContainerCreating   0          5s
+  > pod-info-deployment-64f9d5546f-dp6lf   1/1     Running             0          5s
+  > ```
+  >
+  > There exactly 3 pods! (as `replicas: 3` in [`development.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml#L10) manifest)
+
+- When it's configured to be `3` replicas, there will always be those 3 replicas of the same application, and that can be shown using:
+
+  ```sh
+  # syntax: kubcetl delete pod <pod-name> -n <namespace>
+  kubectl delete pod pod-info-deployment-64f9d5546f-6rqsw -n development
+  ```
+
+  O/P:
+
+  ```terminal
+  pod "pod-info-deployment-64f9d5546f-6rqsw" deleted from development namespace
+  ```
+
+  Now, if we list the pods in `development` namespace, there would be 3 pods for sure:
+
+  ```sh
+  kubectl get pods -n development
+  ```
+
+  O/P:
+
+  ```terminal
+  NAME                                   READY   STATUS    RESTARTS   AGE
+  pod-info-deployment-64f9d5546f-7n8ks   1/1     Running   0          9m49s
+  pod-info-deployment-64f9d5546f-dp6lf   1/1     Running   0          9m49s
+  pod-info-deployment-64f9d5546f-pqm6m   1/1     Running   0          2m9s
+  ```
+  
+  > As you can see! there are no pods that were destroyed, but a new one got spun-up in no time.
+
+[Go 🆙](#table-of-contents)
