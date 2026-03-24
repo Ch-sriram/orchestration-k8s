@@ -5,10 +5,10 @@
 
 ## Table of Contents
 
-- [Orchestration — K8S](#orchestration--k8s)
-  - [Table of Contents](#table-of-contents)
-  - [Get Started](#get-started)
-  - [Spin-Up Clusters \& Interact With Them](#spin-up-clusters--interact-with-them)
+- [Get Started](#get-started)
+- [Spin-Up Clusters \& Interact With Them](#spin-up-clusters--interact-with-them)
+- [Create a Namepsace](#create-a-namepsace)
+  - [Example Namespace](#example-namespace)
 
 ## Get Started
 
@@ -136,3 +136,110 @@
   > ***NOTE***: `services` act as node balances within a cluster and they direct traffic to `pods`.
 
 [Go 🆙](#table-of-contents)
+
+## Create a Namepsace
+
+- Kubernetes `namespace`s lets you isolate organize your workloads.
+  - Ex: If you've different environments for your application and services, you can organize the different environments of your application using namespaces like `"dev"` [for development] and `"prod"` [for production].
+
+### Example Namespace
+
+- The following yaml is available at [`nameppace.yml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_02_Begin/namespace.yaml)
+
+  ```yml
+  ---
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: development # this is what's important; this namespace is called `development`
+  ```
+
+- To create a namespace from the aforementioned file, you run `kubectl` as:
+
+  ```sh
+  kubectl apply -f /path/to/namespace.yaml
+  ```
+
+  You should see something like this:
+
+  > ```terminal
+  > namespace/development created
+  > ```
+
+- Then check the created namespace using:
+
+  ```sh
+  kubectl get namespaces
+  ```
+
+  > You should something as follows:
+  >
+  > ```terminal
+  > NAME              STATUS   AGE
+  > default           Active   26h
+  > development       Active   2s        <----  NEWLY CREATED
+  > kube-node-lease   Active   26h
+  > kube-public       Active   26h
+  > kube-system       Active   26h
+  > ```
+
+- Because kubernetes manifests are written in YAML, it's possible to define multiple resources in one file by separating them with 3 horizontal dashes `-` as follows:
+
+  ```yml
+  ---
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: development # this is what's important; this namespace is called `development`
+  ---         # <--- signifies a new resource definition in k8s
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: production # this is what's important; this namespace is called `production`
+  ```
+
+  > As can be seen here, there are 2 namepsaces defined here in the same manifest because YAML allows this by using the 3 horizontal dashes `---`.
+
+- Run the apply command again:
+
+  ```sh
+  kubectl apply -f /path/to/namespace.yaml
+  ```
+
+  You should see something like this:
+
+  > ```terminal
+  > namespace/development unchanged
+  > namespace/production created
+  > ```
+
+  Get the namespaces:
+
+  ```sh
+  kubectl get namespaces
+  ```
+
+  You should see the following:
+
+  > ```terminal
+  > NAME              STATUS   AGE
+  > default           Active   27h
+  > development       Active   45m
+  > kube-node-lease   Active   27h
+  > kube-public       Active   27h
+  > kube-system       Active   27h
+  > production        Active   118s
+  > ```
+
+- To ***delete*** the namespaces that were just created, use the following command:
+
+  ```sh
+  kubectl delete -f /path/to/namespace.yaml
+  ```
+
+  You should see the following:
+
+  > ```terminal
+  > namespace "development" deleted
+  > namespace "production" deleted
+  > ```
