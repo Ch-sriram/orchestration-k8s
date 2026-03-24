@@ -11,6 +11,7 @@
   - [Example Namespace](#example-namespace)
 - [Deploying An Application](#deploying-an-application)
   - [Creating Pods Using an Existing YAML Spec](#creating-pods-using-an-existing-yaml-spec)
+  - [Check Health Using Event Logs](#check-health-using-event-logs)
 
 ## Get Started
 
@@ -385,5 +386,97 @@
   ```
   
   > As you can see! there are no pods that were destroyed, but a new one got spun-up in no time.
+
+[Go 🆙](#table-of-contents)
+
+### Check Health Using Event Logs
+
+- K8S saves the event log when a new pod is created during a deployment, so that anyone can troubleshoot the pod in case of a failure.
+- Get the pod whose event log you'd like to view:
+
+  ```sh
+  kubectl get pods -n development
+  ```
+
+  Output can be like this:
+
+  > ```terminal
+  > NAME                                   READY   STATUS    RESTARTS   AGE
+  > pod-info-deployment-64f9d5546f-7n8ks   1/1     Running   0          19m
+  > pod-info-deployment-64f9d5546f-dp6lf   1/1     Running   0          19m
+  > pod-info-deployment-64f9d5546f-pqm6m   1/1     Running   0          11m
+  > ```
+
+  We can copy any pod's name we want, and check its event log.
+
+- To check the event log of a pod, use:
+
+  ```sh
+  kubectl describe pod pod-info-deployment-64f9d5546f-7n8ks -n development
+  ```
+
+  You should see something like the following:
+
+  ```terminal
+  Name:             pod-info-deployment-64f9d5546f-7n8ks
+  Namespace:        development
+  Priority:         0
+  Service Account:  default
+  Node:             minikube/192.168.49.2
+  Start Time:       Tue, 24 Mar 2026 20:14:11 +0530
+  Labels:           app=pod-info
+                    pod-template-hash=64f9d5546f
+  Annotations:      <none>
+  Status:           Running
+  IP:               10.244.0.5
+  IPs:
+    IP:           10.244.0.5
+  Controlled By:  ReplicaSet/pod-info-deployment-64f9d5546f
+  Containers:
+    pod-info-container:
+      Container ID:   docker://1493115e2664fd5d62fc19119d9a35935bf9512d54f64b68c772e7b0fa610efb
+      Image:          kimschles/pod-info-app:latest
+      Image ID:       docker-pullable://kimschles/pod-info-app@sha256:fa4f33bc2301bb242bdd078ac206d0e379dfed2e225d46a6952ff444ae6f4a7a
+      Port:           3000/TCP
+      Host Port:      0/TCP
+      State:          Running
+        Started:      Tue, 24 Mar 2026 20:14:16 +0530
+      Ready:          True
+      Restart Count:  0
+      Environment:
+        POD_NAME:       pod-info-deployment-64f9d5546f-7n8ks (v1:metadata.name)
+        POD_NAMESPACE:  development (v1:metadata.namespace)
+        POD_IP:          (v1:status.podIP)
+      Mounts:
+        /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-94qf7 (ro)
+  Conditions:
+    Type                        Status
+    PodReadyToStartContainers   True 
+    Initialized                 True 
+    Ready                       True 
+    ContainersReady             True 
+    PodScheduled                True 
+  Volumes:
+    kube-api-access-94qf7:
+      Type:                    Projected (a volume that contains injected data from multiple sources)
+      TokenExpirationSeconds:  3607
+      ConfigMapName:           kube-root-ca.crt
+      Optional:                false
+      DownwardAPI:             true
+  QoS Class:                   BestEffort
+  Node-Selectors:              <none>
+  Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                              node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+  Events:
+    Type    Reason     Age   From               Message
+    ----    ------     ----  ----               -------
+    Normal  Scheduled  21m   default-scheduler  Successfully assigned development/pod-info-deployment-64f9d5546f-7n8ks to minikube
+    Normal  Pulling    21m   kubelet            spec.containers{pod-info-container}: Pulling image "kimschles/pod-info-app:latest"
+    Normal  Pulled     21m   kubelet            spec.containers{pod-info-container}: Successfully pulled image "kimschles/pod-info-app:latest" in 2.338s (4.873s including waiting). Image size: 213980203 bytes.
+    Normal  Created    21m   kubelet            spec.containers{pod-info-container}: Container created
+    Normal  Started    21m   kubelet            spec.containers{pod-info-container}: Container started
+  ```
+
+  > There are no issues with the pod, but, most issues of the pod during the first few minutes of the deployment.
 
 [Go 🆙](#table-of-contents)
