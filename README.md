@@ -9,7 +9,6 @@
 
 1. Challenge I: Create Your Own Deployment
 
-
 ## Table of Contents
 
 - [Get Started](#get-started)
@@ -633,3 +632,15 @@
   ```
 
 [Go 🆙](#table-of-contents)
+
+## Challenge 1: Create Your Own Deployment
+
+1. Create a new deployment in a file called `quote.yaml`
+2. Name the deployment and name the app label `quote-service`
+3. Use the `development` namespace
+4. Name the container `quote-container`
+5. Run `2` replicas
+6. Use the image `datawire/quote:0.5.0`
+7. Set the container to accept traffic at port `8080`
+8. Create the pods using `kubectl apply -f quote.yml`
+9. [OPTIONAL] Use `BusyBox` to test that the application can accept traffic from inside the cluster
