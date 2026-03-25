@@ -644,3 +644,5 @@
 7. Set the container to accept traffic at port `8080`
 8. Create the pods using `kubectl apply -f quote.yml`
 9. [OPTIONAL] Use `BusyBox` to test that the application can accept traffic from inside the cluster
+
+> Solution [along with an explanation] can be found at [`challenge-solutions/challenge-1__create-your-own-deployment/`](.challenge-solutions/challenge-1__create-your-own-deployment/).
