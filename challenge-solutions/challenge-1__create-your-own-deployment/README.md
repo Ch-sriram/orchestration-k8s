@@ -1,4 +1,4 @@
-# Steps
+# Steps for my own [`quote.yml`](./quote.yml)
 
 1. Create the deployment using [`quote.yml`](./quote.yml)
 
@@ -63,3 +63,23 @@
     "time": "2026-03-25T18:07:48.903543734Z"
    }
    ```
+
+## Instructor's Solution
+
+- Instructor did everything that I did, except that, the way of querying, was to remove the existing `index.html`, and run the following command from inside the `busybox` pod:
+
+  ```sh
+  rm index.html
+  wget 10.244.0.10:8080
+  cat index.html
+  ```
+
+  O/P:
+
+  ```json
+  {
+    "server": "fuzzy-banana-atnh9rgt",
+    "quote": "A principal idea is omnipresent, much like candy.",
+    "time": "2026-03-25T18:38:47.140691459Z"
+  }
+  ```
