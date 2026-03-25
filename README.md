@@ -3,6 +3,13 @@
 - This repository contains concepts and tools related to Kubernetes (K8S).
 - The exercises are sourced from [LinkedIn Learning's Course &mdash; Learning Kubernetes by *Kim Schlesinger*](https://github.com/LinkedInLearning/learning-kubernetes-3212391/tree/main)
 
+## Challenges
+
+> The challenges are to be done after the content above it understood and practiced.
+
+1. Challenge I: Create Your Own Deployment
+
+
 ## Table of Contents
 
 - [Get Started](#get-started)
@@ -12,6 +19,8 @@
 - [Deploying An Application](#deploying-an-application)
   - [Creating Pods Using an Existing YAML Spec](#creating-pods-using-an-existing-yaml-spec)
   - [Check Health Using Event Logs](#check-health-using-event-logs)
+  - [Application/Pod Verification Using `BusyBox`](#applicationpod-verification-using-busybox)
+  - [Application/Pod Verification Using Application Logs](#applicationpod-verification-using-application-logs)
 
 ## Get Started
 
@@ -478,5 +487,149 @@
   ```
 
   > There are no issues with the pod, but, most issues of the pod during the first few minutes of the deployment.
+
+[Go 🆙](#table-of-contents)
+
+### Application/Pod Verification Using `BusyBox`
+
+- Once you deploy, you might want to verify that the application is working as expected.
+- One way to verify and check, is to use a tool called **BusyBox** [contains many utilities like `awk`, `wget`, `date`, `whoami`, etc]. It's a great tool for debugging, and troubleshooting applications on a linux environment, and k8s runs on linux.
+- Since we just want to debug and verify our application's working, we can just use our default namespace, and create only 1 replica of the `BusyBox` pod, from the file in [`busybox.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_05/busybox.yaml).
+
+  ```yml
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: busybox
+    namespace: default
+    labels:
+      app: busybox
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: busybox
+    template:
+      metadata:
+        labels:
+          app: busybox
+      spec:
+        containers:
+          - name: busybox-container
+            image: busybox:latest
+            command: ['/bin/sh', '-c', '--'] # This keeps the container running, otherwise, the container will start and terminate
+            args: ['while true; do sleep 30; done']
+            resources:
+              requests:
+                cpu: 30m
+                memory: 60Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+  ```
+
+  ```sh
+  kubectl apply -f /path/to/busybox.yaml
+  ```
+
+  Check whether the container was created or not:
+
+  ```sh
+  kubectl get pods
+  ```
+
+  O/P should be:
+
+  ```terminal
+  NAME                       READY   STATUS              RESTARTS   AGE
+  busybox-65c9d65546-wzvqj   0/1     ContainerCreating   0          6s
+  ```
+
+  > Remember, whenever you use the command `kubectl get pods`, it always gets the pods running in `default` namespace.
+  > To explicitly get the pods running in a namespace, you've to use the command - `kubectl get pods -n <namespace-name>`
+
+- Now get the pods running in `development` namespace using the `wide` option to show extra information like IP addresses, restarts, node, etc:
+
+  ```sh
+  kubectl get pods -n development -o wide
+  ```
+
+  O/P:
+
+  ```terminal
+  NAME                                   READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+  pod-info-deployment-64f9d5546f-7n8ks   1/1     Running   0          24h   10.244.0.5   minikube   <none>           <none>
+  pod-info-deployment-64f9d5546f-dp6lf   1/1     Running   0          24h   10.244.0.4   minikube   <none>           <none>
+  pod-info-deployment-64f9d5546f-pqm6m   1/1     Running   0          24h   10.244.0.7   minikube   <none>           <none>
+  ```
+
+- Login to the busybox pod using the following `exec` command [similar to how we login to a container using `docker`]:
+
+  ```sh
+  kubectl exec -it busybox-65c9d65546-wzvqj -- /bin/sh
+  ```
+
+  You should be able to see a new shell prompt as follows:
+
+  ```terminal
+  / #
+  ```
+
+  > You're successfully logged into busybox pod.
+
+- In the busybox pod, try and `wget` on one of the IPs for the pods in `development` namespace as follows:
+
+  ```terminal
+  / # wget 10.244.0.5
+  ```
+
+  You should see something like the following:
+
+  ```terminal
+  / # wget 10.244.0.5
+  Connecting to 10.244.0.5 (10.244.0.5:80)
+  wget: can't connect to remote host (10.244.0.5): Connection refused
+  / #
+  ```
+
+  That's because the app is originally deployed on port `3000`, as mentioned in [`deployment.yamlL23`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yamlL23).
+
+- Now if you try to use `wget` for the same IP, on port `3000`, as follows:
+
+  ```terminal
+  / # wget 10.244.0.5:3000
+  ```
+
+  O/P should be the following:
+
+  ```terminal
+  / # wget 10.244.0.5:3000
+  Connecting to 10.244.0.5:3000 (10.244.0.5:3000)
+  saving to 'index.html'
+  index.html           100% |*********************************************************************************************************************************|   103  0:00:00 ETA
+  'index.html' saved
+  ```
+
+  > `wget` saved a file called `index.html` in the same directory.
+  > To look into the file, you can run `cat index.html`. It just returns the pod name, namespace, and IP like: `{"pod_name":"pod-info-deployment-64f9d5546f-7n8ks","pod_namespace":"development","pod_ip":"10.244.0.5"}`.
+
+[Go 🆙](#table-of-contents)
+
+### Application/Pod Verification Using Application Logs
+
+- We can also check whether the application is working or not, using application logs.
+- To do so, we need to use the following command [but first, get the name of the pod whose logs you'd like to inspect using `kubectl get pods -n <namespace-name>`]:
+
+  ```sh
+  kubectl logs pod-info-deployment-64f9d5546f-7n8ks -n development
+  ```
+
+  O/P should be:
+
+  ```terminal
+  undefined
+  Example app listening on port 3000
+  ```
 
 [Go 🆙](#table-of-contents)
