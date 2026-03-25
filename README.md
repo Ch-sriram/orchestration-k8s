@@ -7,19 +7,23 @@
 
 > The challenges are to be done after the content above it understood and practiced.
 
-1. Challenge I: Create Your Own Deployment
+1. [Challenge 1: Create Your Own Deployment](#challenge-1-create-your-own-deployment)
 
 ## Table of Contents
 
-- [Get Started](#get-started)
-- [Spin-Up Clusters \& Interact With Them](#spin-up-clusters--interact-with-them)
-- [Create a Namepsace](#create-a-namepsace)
-  - [Example Namespace](#example-namespace)
-- [Deploying An Application](#deploying-an-application)
-  - [Creating Pods Using an Existing YAML Spec](#creating-pods-using-an-existing-yaml-spec)
-  - [Check Health Using Event Logs](#check-health-using-event-logs)
-  - [Application/Pod Verification Using `BusyBox`](#applicationpod-verification-using-busybox)
-  - [Application/Pod Verification Using Application Logs](#applicationpod-verification-using-application-logs)
+- [Orchestration — K8S](#orchestration--k8s)
+  - [Challenges](#challenges)
+  - [Table of Contents](#table-of-contents)
+  - [Get Started](#get-started)
+  - [Spin-Up Clusters \& Interact With Them](#spin-up-clusters--interact-with-them)
+  - [Create a Namepsace](#create-a-namepsace)
+    - [Example Namespace](#example-namespace)
+  - [Deploying An Application](#deploying-an-application)
+    - [Creating Pods Using an Existing YAML Spec](#creating-pods-using-an-existing-yaml-spec)
+    - [Check Health Using Event Logs](#check-health-using-event-logs)
+    - [Application/Pod Verification Using `BusyBox`](#applicationpod-verification-using-busybox)
+    - [Application/Pod Verification Using Application Logs](#applicationpod-verification-using-application-logs)
+  - [Challenge 1: Create Your Own Deployment](#challenge-1-create-your-own-deployment)
 
 ## Get Started
 
