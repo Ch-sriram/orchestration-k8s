@@ -24,6 +24,8 @@
     - [Application/Pod Verification Using `BusyBox`](#applicationpod-verification-using-busybox)
     - [Application/Pod Verification Using Application Logs](#applicationpod-verification-using-application-logs)
   - [Challenge 1: Create Your Own Deployment](#challenge-1-create-your-own-deployment)
+  - [Complex Application Deployment](#complex-application-deployment)
+    - [Kubernetes Service — Explosing App to Internet w/ Load Balancer](#kubernetes-service--explosing-app-to-internet-w-load-balancer)
 
 ## Get Started
 
@@ -652,3 +654,87 @@
 > Solution [along with an explanation] can be found at [`challenge-solutions/challenge-1__create-your-own-deployment/`](challenge-solutions/challenge-1__create-your-own-deployment/).
 
 [Go 🆙](#table-of-contents)
+
+## Complex Application Deployment
+
+- In this section, you'll learn about:
+  1. What's a Kubernetes Service.
+  2. How to manage resources and set limits for your pods.
+  3. Deleting the created pods and clusters.
+
+### Kubernetes Service &mdash; Explosing App to Internet w/ Load Balancer
+
+- Up until this point, whichever app we've deployed, has only been accessible from inside the busybox pod/container. But how do you expose your app to the internet?
+- Using a **Kubernetes Service**: It's a load balancer that connects the internet to the k8s pods. A load balancer service has a public and a static IP address. Public IP => anyone on the internet can access it; and the static IP is important, because your pods and their IP addresses change frequently (because of pod tear down due to auto-scaling), but your service IP needs to remain the same.
+- Taking a look at a YAML manifest for a service (can be found also at [`service.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_01/service.yaml)):
+
+  ```yml
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: demo-service
+    namespace: development
+  spec:
+    selector:
+      app: pod-info         # This label must be used for all the apps that want to make use of this service. See `deployment.yaml` at https://github.com/Ch-sriram/orchestration-k8s/blob/00788cd5cbc6cbf5a3fdead1c8900b8cdc680008/Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml#L8.
+    ports:
+      - port: 80            # Accept traffic from anyone on the internet, only on port 80.
+        targetPort: 3000    # Re-route all traffic from port 80, to port 3000 locally, in the cluster pods, that make use of `pod-info` label.
+    type: LoadBalanacer     # 1 of 3 types of Kubernetes Services: The other 2 are NodePort and ClusterIP
+  ```
+
+- To create the service, run the following command in a new terminal:
+
+  ```sh
+  minikube tunnel
+  ```
+
+  O/P should be the following:
+
+  ```terminal
+  user@host ~ $ minikube tunnel
+  [sudo] password for user@host: 
+  Status:
+          machine: minikube
+          pid: 91336
+          route: 10.96.0.0/12 -> 192.168.49.2
+          minikube: Running
+          services: []
+      errors: 
+                  minikube: no errors
+                  router: no errors
+                  loadbalancer emulator: no errors
+  ```
+
+- Now, in a new tab, apply the YAML manifest in [`service.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_01/service.yaml), as follows:
+
+  ```sh
+  kubectl apply -f /path/to/service.yaml
+  ```
+
+  O/P:
+
+  > ```terminal
+  > service/demo-service created
+  > ```
+
+- You can check your created service in the *development* namespace as follows:
+
+  ```sh
+  kubectl get services -n development
+  ```
+
+  O/P:
+
+  > ```terminal
+  > user@host:~ $ kubectl get services -n development
+  > NAME           TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)        AGE
+  > demo-service   LoadBalancer   10.103.104.135   10.103.104.135   80:32357/TCP   33s
+  > ```
+  >
+  > NOTE: You can see 2 IPs, one for internal IP, inside the cluster, and the other one is the External IP. In some situations, the External IP may just be the loopback address - `127.0.0.1`, because minikube cluster is a local cluster that runs only in our own computers, and hence, there's no one to access it from the outside. If you ever create a service inside GCP, AWS, or Azure, the External IP is actually an IP, that can be accessed via the Internet.
+
+- Now open a browser, and type-in [or paste] the External IP address of `demo-service`, and you should see the JSON object from the application as follows:
+
+  ![minikube-tunnel-external-ip-service](./images/minikube-tunnel-external-ip-service.png)
