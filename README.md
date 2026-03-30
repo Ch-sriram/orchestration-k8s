@@ -26,6 +26,9 @@
   - [Challenge 1: Create Your Own Deployment](#challenge-1-create-your-own-deployment)
   - [Complex Application Deployment](#complex-application-deployment)
     - [Kubernetes Service — Explosing App to Internet w/ Load Balancer](#kubernetes-service--explosing-app-to-internet-w-load-balancer)
+    - [Add Resource Requests \& Limits To Your Pods](#add-resource-requests--limits-to-your-pods)
+    - [Delete Kuberenetes Objects \& Tear Down Your Cluster](#delete-kuberenetes-objects--tear-down-your-cluster)
+      - [Deleting the `minikube` Cluster](#deleting-the-minikube-cluster)
 
 ## Get Started
 
@@ -738,3 +741,137 @@
 - Now open a browser, and type-in [or paste] the External IP address of `demo-service`, and you should see the JSON object from the application as follows:
 
   ![minikube-tunnel-external-ip-service](./images/minikube-tunnel-external-ip-service.png)
+
+### Add Resource Requests & Limits To Your Pods
+
+- Resources refer to the amount of available cpu and memory on the worker node running your pods.
+- If you deploy a pod without set of resource requests, it can be scheduled on a node, that does NOT have a lot of processing power (cpu) or memory, and might cause the node to fail.
+- Similarly, if you do NOT set resource limits, then you start a pod on a node, and your application starts using more and more cpu and memory, which leads to all resources of your node to be used by the application, causing the node to fail, and failed nodes cause outages, which we want to avoid!
+- Let's add resource request and limits to our `pod-info` container [which can also be found in [`deployment.yaml#L23-L28`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml#L22)]:
+
+  ```diff
+  diff --git a/Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml b/Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml
+  index c5a42a2..7d2d88b 100755
+  --- a/Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml
+  +++ b/Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml
+  @@ -19,6 +19,13 @@ spec:
+        containers:
+        - name: pod-info-container
+          image: kimschles/pod-info-app:latest
+  +        resources:
+  +          requests:
+  +            memory: "64Mi"
+  +            cpu: "250m"
+  +          limits:
+  +            memory: "128Mi"
+  +            cpu: "500m"
+          ports:
+          - containerPort: 3000
+          env:
+  ```
+
+  And run `deployment.yaml` file again as follows:
+
+  ```sh
+  kubectl apply -f /path/to/deployment.yaml
+  ```
+
+  O/P should go from an interim state to a final state:
+
+  > *Interim O/P State*:
+  >
+  > ```terminal
+  > user@host:~ $ kubectl get pods -n development
+  > NAME                                   READY   STATUS        RESTARTS   AGE
+  > pod-info-deployment-5c7d5db544-v2vqq   1/1     Running       0          5s
+  > pod-info-deployment-64f9d5546f-7n8ks   1/1     Terminating   0          5d20h
+  > pod-info-deployment-64f9d5546f-dp6lf   1/1     Terminating   0          5d20h
+  > pod-info-deployment-64f9d5546f-pqm6m   1/1     Terminating   0          5d20h
+  > quote-service-f5bdb8575-rfrz9          1/1     Running       0          4d18h
+  > quote-service-f5bdb8575-wks6q          1/1     Running       0          4d18h
+  > ```
+  >
+  > *Final O/P State*:
+  >
+  > ```terminal
+  > user@host:~ $ kubectl get pods -n development
+  > NAME                                   READY   STATUS    RESTARTS   AGE
+  > pod-info-deployment-5c7d5db544-v2vqq   1/1     Running   0          41s
+  > quote-service-f5bdb8575-rfrz9          1/1     Running   0          4d18h
+  > quote-service-f5bdb8575-wks6q          1/1     Running   0          4d18h
+  > ```
+  >
+  > **NOTE**: These newly created pods are created with the mentioned resource request and limits mentioned in the [`development.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml)
+
+### Delete Kuberenetes Objects & Tear Down Your Cluster
+
+- We'll delete the pods, services, and deployments created so far, and delete the `minikube` cluster to ensure that we don't keep unnecessary pods running &mdash; ensuring freed up resources to be used by some other process/application by the computer.
+- To do so, we shall just run the following command:
+
+  ```sh
+  kubectl delete -f /path/to/<kubernetes-manifest>.yaml
+  ```
+
+- Till now, we've created pods and services using the k8s manifests using the YAML files in [`busybox.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_05/busybox.yaml), [`deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml), [`quote.yaml`](./challenge-solutions/challenge-1__create-your-own-deployment/quote.yml), [`service.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_01/service.yaml), and [`namespace.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_02_End/namespace.yaml). We should use the `delete` command and apply `-f` option on these files to cleanup the pods as follows:
+
+  ```sh
+  kubectl delete -f /path/to/busybox.yaml
+  kubectl delete -f /path/to/deployment.yaml
+  kubectl delete -f /path/to/quote.yaml
+  kubectl delete -f /path/to/service.yaml
+  kubectl delete -f /path/to/namespace.yaml
+  ```
+
+  O/P's should be as follows:
+
+  > ```terminal
+  > user@host:~ $ kubectl delete -f ./Ex_Files_Learning_Kubernetes/Exercise_Files/03_05/busybox.yaml 
+  > deployment.apps "busybox" deleted from default namespace
+  >
+  > user@host:~ $ kubectl get pods
+  > NAME                       READY   STATUS        RESTARTS   AGE
+  > busybox-65c9d65546-wzvqj   1/1     Terminating   0          4d20h
+  >
+  > user@host:~ $ kubectl get pods
+  > No resources found in default namespace.
+  > ```
+  >
+  > ```terminal
+  > user@host:~ $ kubectl delete -f ./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml
+  > deployment.apps "pod-info-deployment" deleted from development namespace
+  > ```
+  >
+  > ```terminal
+  > user@host:~ $ kubectl delete -f ./challenge-solutions/challenge-1__create-your-own-deployment/quote.yml
+  > deployment.apps "quote-service" deleted from development namespace
+  > ```
+  >
+  > ```terminal
+  > user@host:~ $ kubectl delete -f ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_01/service.yaml
+  > service "demo-service" deleted from development namespace
+  > ```
+  >
+  > ```terminal
+  > user@host:~ $ kubectl delete -f ./Ex_Files_Learning_Kubernetes/Exercise_Files/03_02_End/namespace.yaml
+  > namespace "development" deleted
+  > ```
+  >
+  > **NOTE**: Make sure to delete the namespace at the end, if you delete the namespace in the beginning, it'll delete anything that's associated to the namespace at once. To delete everything related to the namespace, you can run the `delete` for only the namespace, and everything related to the namespace, will be deleted.
+
+#### Deleting the `minikube` Cluster
+
+- Run the command:
+
+  ```sh
+  minikube delete
+  ```
+
+  O/P should be as follows:
+
+  > ```terminal
+  > user@host:~ $ minikube delete
+  > 🔥  Deleting "minikube" in docker ...
+  > 🔥  Deleting container "minikube" ...
+  > 🔥  Removing /home/chandrabhatta.sriram/.minikube/machines/minikube ...
+  > 💀  Removed all traces of the "minikube" cluster.
+  > ```
