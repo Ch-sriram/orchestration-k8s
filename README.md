@@ -33,6 +33,7 @@
     - [Kubernetes Control Plane 🔥](#kubernetes-control-plane-)
     - [Kubernetes Worker Nodes 🔥](#kubernetes-worker-nodes-)
       - [Components in Worker Nodes](#components-in-worker-nodes)
+    - [How the Control Plane \& Nodes Work Together](#how-the-control-plane--nodes-work-together)
 
 ## Get Started
 
@@ -1058,5 +1059,21 @@
 3. `kube-proxy`:
    - Makes sure that your pods and services can communicate with other pods and services, on nodes, and in the control plane.
    - Each `kube-proxy` communicates directly with the `kube-api` server.
+
+[Go 🆙](#table-of-contents)
+
+### How the Control Plane & Nodes Work Together
+
+![`time-sequence-diagram-control-plane-worker-nodes`](./images/time-sequence-diagram-control-plane-worker-nodes.png)
+
+- The time sequence diagram shows the sequential order of actions as they occur.
+- The 1st action is at the top of the diagram and the last action, is at the bottom [the 12th one in the diagram above].
+- Software processes are often complex, and things can occur at the same time, so the aforementioned sequence diagram is a simplified version of Kubernetes works under the hood. This example shows us the basic order of actions that K8S takes, when a pod gets scheduled on a node.
+
+There are 3 different parts of the diagram:
+
+- Actor (Left Most) &mdash; Assume that the you're the "Actor" running the command in 1 (`kubectl apply -f /path/to/deployment.yaml`).
+- Control Plane (Middle) &mdash; It's a representation of the kubernetes control plane, with all of its components.
+- Worker Node (Right Most) &mdash; Representation of a single K8S worker node, with a `kubelet` and `container runtime`.
 
 [Go 🆙](#table-of-contents)
