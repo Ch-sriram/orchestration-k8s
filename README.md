@@ -31,6 +31,8 @@
       - [Deleting the `minikube` Cluster](#deleting-the-minikube-cluster)
   - [Kubernetes Architecture 🔥🔥](#kubernetes-architecture-)
     - [Kubernetes Control Plane 🔥](#kubernetes-control-plane-)
+    - [Kubernetes Worker Nodes 🔥](#kubernetes-worker-nodes-)
+      - [Components in Worker Nodes](#components-in-worker-nodes)
 
 ## Get Started
 
@@ -1027,5 +1029,34 @@
 - The Kubernetes Control Plane Contains the Components that Manage the Cluster and Enable the Resiliency and Automation that Kubernetes, such a popular Container Orchestrator.
 
 > NOTE: If you're using a managed kubernetes service like AWS' EKS, GCP's GKE, etc, you'll not be able to see your control plane nodes using `kubectl`. Those details are hidden in a managed k8s service, because the cloud provider handles and does maintenance for the customer.
+
+[Go 🆙](#table-of-contents)
+
+### Kubernetes Worker Nodes 🔥
+
+> **K8S <-> Airport Analogy**: If Kubernetes is an Airport, then **Control Plane** is like the Air Traffic Control Tower, and the **Worker Nodes** are like the *Busy Terminals*, where the *Planes park, and Passengers Board*.
+
+![`worker-node-control-plane-k8s`](./images/worker-node-control-plane-k8s.png)
+
+- In order to be *highly available*, most kubernetes clusters, run with a minimum of 3 worker nodes.
+- The worker nodes are where pods are scheduled and run, and each worker node has 3 components.
+
+#### Components in Worker Nodes
+
+1. `kubelet`:
+   - An agent that runs on every worker node.
+   - Makes sure that containers in a pod are running and healthy.
+   - The `kubelet` communicates directly with the API server [`kube-api` server] in the control plane, and it's always looking for newly assigned pods.
+2. `CRI` &mdash; Container Runtime:
+   - A `kubelet` assigned to new pod, starts a container using Container Runtime Interface (`CRI`).
+   - `CRI` enables the `kubelet` to create containers with the engines listed below:
+     - `containerd`
+     - `CRI-O`
+     - `kata` containers
+     - AWS Firecracker
+       > NOTE: In kubernetes v1.24, `Dockershim` was removed, meaning Docker Engine can no longer be used as container runtime. But docker images still work in kubernetes, because docker images and containers, are 2 different things.
+3. `kube-proxy`:
+   - Makes sure that your pods and services can communicate with other pods and services, on nodes, and in the control plane.
+   - Each `kube-proxy` communicates directly with the `kube-api` server.
 
 [Go 🆙](#table-of-contents)
