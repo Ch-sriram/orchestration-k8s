@@ -37,6 +37,7 @@
       - [Glossary of Kubernetes Cluster Components](#glossary-of-kubernetes-cluster-components)
   - [Advanced Topics](#advanced-topics)
     - [Ways to Manage Kubernetes Pods](#ways-to-manage-kubernetes-pods)
+    - [Running Stateful Workloads](#running-stateful-workloads)
 
 ## Get Started
 
@@ -1122,5 +1123,15 @@ There are 3 different parts of the diagram:
    - Used to deploy more than 1 pod at a time.
    - A kubernetes job will create 1+ pods and run the container inside of them, until it has successfully completed its task.
    - Example: An application that you deploy in a testing cluster that will generate a batch of data for your testing framework. You only need to generate that data once in a while, and you can delete the pod/app once its job is done.
+
+[Go 🆙](#table-of-contents)
+
+### Running Stateful Workloads
+
+- Earlier, we deployed a sample application [using [`deployment`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml)] which was stateless => app didn't communicate with any database/storage.
+- Then, how do we handle data storage in Kubernetes?
+- There are *two* ways:
+  1. **Setup a Database Independent of your Cluster** &mdash; Let's assume you've an application that uses MySQL for data persistence. You can either build and maintain a SQL database server that is separate from your cluster, OR, you can use a managed database service like Azure SQL, Amazon RDS, or Google Cloud SQL, and configure it to communicate with your cluster in kubernetes.
+  2. **Kubernetes Persistent Volumes** &mdash; Persistent Volumes are a type of data storage that exist in your cluster, and remain, even after a pod is destroyed. You can use a kubenetes object, called a `StatefulSet`, to make sure your updated application can communicate with the same volume that was communicating with your previous pod.
 
 [Go 🆙](#table-of-contents)
