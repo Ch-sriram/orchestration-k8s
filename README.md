@@ -35,6 +35,8 @@
       - [Components in Worker Nodes](#components-in-worker-nodes)
     - [How the Control Plane \& Nodes Work Together](#how-the-control-plane--nodes-work-together)
       - [Glossary of Kubernetes Cluster Components](#glossary-of-kubernetes-cluster-components)
+  - [Advanced Topics](#advanced-topics)
+    - [Ways to Manage Kubernetes Pods](#ways-to-manage-kubernetes-pods)
 
 ## Get Started
 
@@ -1092,5 +1094,33 @@ There are 3 different parts of the diagram:
    1. Container Runtime `CRI`: Pulls container images, creates and manages containers, and ensures they run properly and securely as directed by the Kubernetes control plane
    2. `kube-proxy`: A network proxy that runs on each node in a Kubernetes cluster, maintaining network rules and enabling communication between pods and services within the node and the control plane, while also communicating directly with the kube-apiserver
    3. `kubelet`: An agent that runs on each node in a Kubernetes cluster, ensuring containers in a pod are running and healthy while communicating with the API server in the control plane to maintain the desired state of the node
+
+[Go 🆙](#table-of-contents)
+
+## Advanced Topics
+
+- Includes details about:
+  1. Ways to manage Kubernetes pods
+  2. Running stateful workloads
+  3. Kubernetes security and hardening
+
+[Go 🆙](#table-of-contents)
+
+### Ways to Manage Kubernetes Pods
+
+> Till now, we've created pods using Kubernetes *deployment* object. But there are other ways of creating pods.
+
+1. `Deployment`:
+   - Most common way to deploy containerized applications.
+   - Deployments allow you to control the number of `Replicas` running.
+   - No downtime-upgrades: When you've the new version of your application, and you're ready to deploy it, kubernetes can keep the old version up and running, roll out the new version, ensure the new pods the containers are running in are healthy, and then remove the old pods.
+2. `DaemonSet`:
+   - It'll put one copy of a container on every node running in the cluster, so you cannot directly control the number of replicas running.
+   - Daemon sets usually run containers that are agents or daemons which are processes running in the background.
+   - It's common for `DaemonSet`s to run a program that collects metrics about the underlying node or pods on that node.
+3. `Job`:
+   - Used to deploy more than 1 pod at a time.
+   - A kubernetes job will create 1+ pods and run the container inside of them, until it has successfully completed its task.
+   - Example: An application that you deploy in a testing cluster that will generate a batch of data for your testing framework. You only need to generate that data once in a while, and you can delete the pod/app once its job is done.
 
 [Go 🆙](#table-of-contents)
