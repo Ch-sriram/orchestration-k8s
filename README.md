@@ -1049,6 +1049,7 @@
    - An agent that runs on every worker node.
    - Makes sure that containers in a pod are running and healthy.
    - The `kubelet` communicates directly with the API server [`kube-api` server] in the control plane, and it's always looking for newly assigned pods.
+   - Also fetches the images for the containers that are to be spun up.
 2. `CRI` &mdash; Container Runtime:
    - A `kubelet` assigned to new pod, starts a container using Container Runtime Interface (`CRI`).
    - `CRI` enables the `kubelet` to create containers with the engines listed below:
