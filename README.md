@@ -742,6 +742,8 @@
 
   ![minikube-tunnel-external-ip-service](./images/minikube-tunnel-external-ip-service.png)
 
+[Go 🆙](#table-of-contents)
+
 ### Add Resource Requests & Limits To Your Pods
 
 - Resources refer to the amount of available cpu and memory on the worker node running your pods.
@@ -803,6 +805,8 @@
   >
   > **NOTE**: These newly created pods are created with the mentioned resource request and limits mentioned in the [`development.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml)
 
+[Go 🆙](#table-of-contents)
+
 ### Delete Kuberenetes Objects & Tear Down Your Cluster
 
 - We'll delete the pods, services, and deployments created so far, and delete the `minikube` cluster to ensure that we don't keep unnecessary pods running &mdash; ensuring freed up resources to be used by some other process/application by the computer.
@@ -858,6 +862,8 @@
   >
   > **NOTE**: Make sure to delete the namespace at the end, if you delete the namespace in the beginning, it'll delete anything that's associated to the namespace at once. To delete everything related to the namespace, you can run the `delete` for only the namespace, and everything related to the namespace, will be deleted.
 
+[Go 🆙](#table-of-contents)
+
 #### Deleting the `minikube` Cluster
 
 - Run the command:
@@ -875,3 +881,149 @@
   > 🔥  Removing /home/chandrabhatta.sriram/.minikube/machines/minikube ...
   > 💀  Removed all traces of the "minikube" cluster.
   > ```
+
+## Kubernetes Architecture 🔥🔥
+
+- We'll learn about the architecture of kubernetes, and how it works to create pods and manage them in real-time.
+
+### Kubernetes Control Plane 🔥
+
+> **JARGON**: **Cluster** is an instance of Kubernetes. Each *cluster* has a **Control Plane**, and at least one **Worker Node**.
+>
+> **K8S <-> Airport Analogy**: If Kubernetes is an Airport, then **Control Plane** is like the Air Traffic Control Tower, with people overlooking the Cluster (Airplanes) and making sure **Nodes** and **Pods** are *Created, Modified, and Deleted*, without any issues.
+
+- The **Control Plane** is made of several components, and knowing how each component functions, will help in understanding Kubernetes better.
+- The Kuberenetes Components:
+  
+  ![k8s-components](./images/k8s-components.png)
+
+  1. One of the important components, is the `kube-api` server:
+     - The `kube-api` server exposes the Kubernetes API.
+     - Each K8S object, like Pods, Deployments, and the Horizontal Pod Autoscaler, have API endpoints.
+     - The Kubernetes API has a REST interface, and
+     - `kubectl` and `kubeadm` are CLI tools to communicate with the Kubernetes API via HTTP requests.
+     - Use the following command, to check all the K8S API objects and their API version:
+
+       ```sh
+       kubectl api-resources
+       ```
+
+       O/P should be something like [Ensure that `minikube` cluster is starteed using `minikube start`]:
+
+       > ```terminal
+       > user@host:~ $ kubectl api-resources
+       > NAME                                SHORTNAMES   APIVERSION                        NAMESPACED   KIND
+       > bindings                                         v1                                true         Binding
+       > componentstatuses                   cs           v1                                false        ComponentStatus
+       > configmaps                          cm           v1                                true         ConfigMap
+       > endpoints                           ep           v1                                true         Endpoints
+       > events                              ev           v1                                true         Event
+       > limitranges                         limits       v1                                true         LimitRange
+       > namespaces                          ns           v1                                false        Namespace
+       > nodes                               no           v1                                false        Node
+       > persistentvolumeclaims              pvc          v1                                true         PersistentVolumeClaim
+       > persistentvolumes                   pv           v1                                false        PersistentVolume
+       > pods                                po           v1                                true         Pod
+       > podtemplates                                     v1                                true         PodTemplate
+       > replicationcontrollers              rc           v1                                true         ReplicationController
+       > resourcequotas                      quota        v1                                true         ResourceQuota
+       > secrets                                          v1                                true         Secret
+       > serviceaccounts                     sa           v1                                true         ServiceAccount
+       > services                            svc          v1                                true         Service
+       > mutatingwebhookconfigurations                    admissionregistration.k8s.io/v1   false        MutatingWebhookConfiguration
+       > validatingadmissionpolicies                      admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicy
+       > validatingadmissionpolicybindings                admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicyBinding
+       > validatingwebhookconfigurations                  admissionregistration.k8s.io/v1   false        ValidatingWebhookConfiguration
+       > customresourcedefinitions           crd,crds     apiextensions.k8s.io/v1           false        CustomResourceDefinition
+       > apiservices                                      apiregistration.k8s.io/v1         false        APIService
+       > controllerrevisions                              apps/v1                           true         ControllerRevision
+       > daemonsets                          ds           apps/v1                           true         DaemonSet
+       > deployments                         deploy       apps/v1                           true         Deployment
+       > replicasets                         rs           apps/v1                           true         ReplicaSet
+       > statefulsets                        sts          apps/v1                           true         StatefulSet
+       > selfsubjectreviews                               authentication.k8s.io/v1          false        SelfSubjectReview
+       > tokenreviews                                     authentication.k8s.io/v1          false        TokenReview
+       > localsubjectaccessreviews                        authorization.k8s.io/v1           true         LocalSubjectAccessReview
+       > selfsubjectaccessreviews                         authorization.k8s.io/v1           false        SelfSubjectAccessReview
+       > selfsubjectrulesreviews                          authorization.k8s.io/v1           false        SelfSubjectRulesReview
+       > subjectaccessreviews                             authorization.k8s.io/v1           false        SubjectAccessReview
+       > horizontalpodautoscalers            hpa          autoscaling/v2                    true         HorizontalPodAutoscaler
+       > cronjobs                            cj           batch/v1                          true         CronJob
+       > jobs                                             batch/v1                          true         Job
+       > certificatesigningrequests          csr          certificates.k8s.io/v1            false        CertificateSigningRequest
+       > leases                                           coordination.k8s.io/v1            true         Lease
+       > endpointslices                                   discovery.k8s.io/v1               true         EndpointSlice
+       > events                              ev           events.k8s.io/v1                  true         Event
+       > flowschemas                                      flowcontrol.apiserver.k8s.io/v1   false        FlowSchema
+       > prioritylevelconfigurations                      flowcontrol.apiserver.k8s.io/v1   false        PriorityLevelConfiguration
+       > ingressclasses                                   networking.k8s.io/v1              false        IngressClass
+       > ingresses                           ing          networking.k8s.io/v1              true         Ingress
+       > ipaddresses                         ip           networking.k8s.io/v1              false        IPAddress
+       > networkpolicies                     netpol       networking.k8s.io/v1              true         NetworkPolicy
+       > servicecidrs                                     networking.k8s.io/v1              false        ServiceCIDR
+       > runtimeclasses                                   node.k8s.io/v1                    false        RuntimeClass
+       > poddisruptionbudgets                pdb          policy/v1                         true         PodDisruptionBudget
+       > clusterrolebindings                              rbac.authorization.k8s.io/v1      false        ClusterRoleBinding
+       > clusterroles                                     rbac.authorization.k8s.io/v1      false        ClusterRole
+       > rolebindings                                     rbac.authorization.k8s.io/v1      true         RoleBinding
+       > roles                                            rbac.authorization.k8s.io/v1      true         Role
+       > deviceclasses                                    resource.k8s.io/v1                false        DeviceClass
+       > resourceclaims                                   resource.k8s.io/v1                true         ResourceClaim
+       > resourceclaimtemplates                           resource.k8s.io/v1                true         ResourceClaimTemplate
+       > resourceslices                                   resource.k8s.io/v1                false        ResourceSlice
+       > priorityclasses                     pc           scheduling.k8s.io/v1              false        PriorityClass
+       > csidrivers                                       storage.k8s.io/v1                 false        CSIDriver
+       > csinodes                                         storage.k8s.io/v1                 false        CSINode
+       > csistoragecapacities                             storage.k8s.io/v1                 true         CSIStorageCapacity
+       > storageclasses                      sc           storage.k8s.io/v1                 false        StorageClass
+       > volumeattachments                                storage.k8s.io/v1                 false        VolumeAttachment
+       > volumeattributesclasses             vac          storage.k8s.io/v1                 false        VolumeAttributesClass
+       > ```
+
+     - Like all things in Kubernetes, the `kube-api` server, is also a containerized application, which is run as a pod, and you can check those pods, seeing all the pods, in the `kube-system` namespace as follows:
+
+       ```sh
+       kubectl get pods -n kube-system
+       ```
+
+       O/P:
+
+       > ```terminal
+       > $ kubectl get pods -n kube-system
+       > NAME                               READY   STATUS    RESTARTS       AGE
+       > coredns-7d764666f9-5rhmp           1/1     Running   0              6m39s
+       > etcd-minikube                      1/1     Running   0              6m44s
+       > kube-apiserver-minikube            1/1     Running   0              6m44s
+       > kube-controller-manager-minikube   1/1     Running   0              6m44s
+       > kube-proxy-bkcpn                   1/1     Running   0              6m39s
+       > kube-scheduler-minikube            1/1     Running   0              6m44s
+       > storage-provisioner                1/1     Running   1 (6m8s ago)   6m43s
+       > ```
+       >
+       > As you can see, the `kube-api` server pod is named as `kube-apiserver-minikube` inside the `kube-system` namespace.
+
+     - The `kube-api` server is the kubernetes component that handles the most requests from the user, and from inside the cluster, and without it, a K8S cluster, cannot exist.
+
+  2. `etcd`: Open source, highly available, key-value store. In a kubernetes cluster, `etcd` is responsible for storing all data about the state of the cluster.
+     - Only the `kube-api` server can communicate with `etcd`.
+     - `etcd` is also run as a pod, and you can get the `etcd` pod name using `kubectl get pods -n kube-system`. As mentioned above, `etcd`'s pod is named as `etcd-minikube`.
+     - Finding the logs and printing the `etcd` pod in the `kube-system` namespace is as easy as the following command:
+
+       ```sh
+       kubectl logs etc-minikube -n kube-system | jq .
+       ```
+
+       > You can check the `etcd` pod's logs here, in [`etc-minikube-pod-logs`](./meteadata/etcd-minikube-pod-logs.txt).
+  
+  3. `kube-sched`: Kubernetes Scheduler, identifies newly created pods that have not been assigned a worker node, and then chooses a node for the pod to run on.
+     - Like previous k8s components, the `kube-sched` is also a pod, and you can check more about it using the command: `kubectl logs kube-scheduler-minikube -n kube-system`.
+
+  4. `kube-cm`: Kubernetes Controller Manager is a loop that runs contnually, and checks the status of the cluster to make sure everything is running properly. Ex: `kube-cm` checks that all worker nodes are up and running, and if it finds that something is broken, it'll remove that broken node, and replace it with a new worker node.
+
+  5. `kube-ccm`: Kubernetes Cloud Controller Manager, which lets you connect the cluster, with a Cloud Provider's API, so that you can use Cloud Resources from AWS, GCP, Azure, or any public cloud.
+
+- The Kubernetes Control Plane Contains the Components that Manage the Cluster and Enable the Resiliency and Automation that Kubernetes, such a popular Container Orchestrator.
+
+> NOTE: If you're using a managed kubernetes service like AWS' EKS, GCP's GKE, etc, you'll not be able to see your control plane nodes using `kubectl`. Those details are hidden in a managed k8s service, because the cloud provider handles and does maintenance for the customer.
+
+[Go 🆙](#table-of-contents)
