@@ -29,6 +29,8 @@
     - [Add Resource Requests \& Limits To Your Pods](#add-resource-requests--limits-to-your-pods)
     - [Delete Kuberenetes Objects \& Tear Down Your Cluster](#delete-kuberenetes-objects--tear-down-your-cluster)
       - [Deleting the `minikube` Cluster](#deleting-the-minikube-cluster)
+  - [Kubernetes Architecture 🔥🔥](#kubernetes-architecture-)
+    - [Kubernetes Control Plane 🔥](#kubernetes-control-plane-)
 
 ## Get Started
 
