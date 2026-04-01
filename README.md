@@ -34,6 +34,7 @@
     - [Kubernetes Worker Nodes 🔥](#kubernetes-worker-nodes-)
       - [Components in Worker Nodes](#components-in-worker-nodes)
     - [How the Control Plane \& Nodes Work Together](#how-the-control-plane--nodes-work-together)
+      - [Glossary of Kubernetes Cluster Components](#glossary-of-kubernetes-cluster-components)
 
 ## Get Started
 
@@ -1075,5 +1076,20 @@ There are 3 different parts of the diagram:
 - Actor (Left Most) &mdash; Assume that the you're the "Actor" running the command in 1 (`kubectl apply -f /path/to/deployment.yaml`).
 - Control Plane (Middle) &mdash; It's a representation of the kubernetes control plane, with all of its components.
 - Worker Node (Right Most) &mdash; Representation of a single K8S worker node, with a `kubelet` and `container runtime`.
+
+[Go 🆙](#table-of-contents)
+
+#### Glossary of Kubernetes Cluster Components
+
+1. Location in Cluster: Control Plane
+   1. Cloud Controller Manager `kube-ccm`: Connects a Kubernetes cluster to a cloud provider's API, managing cloud-specific resources and ensuring proper integration with the underlying infrastructure
+   2. `etcd`: A key-value store that saves all data about the state of the cluster; only the kube-apiserver can communicate directly with etcd
+   3. `kube-apiserver`: The kube-apiserver is a key component of Kubernetes that exposes the Kubernetes API, handles most requests, and manages interactions with the cluster by processing and validating API requests, making it essential for the cluster's operation
+   4. `kube-controller-manager`: Monitors the Kubernetes cluster's state, running processes to ensure the current state matches the desired state
+   5. `kube-scheduler`: Identifies a newly created pod that has not been assigned a worker node and assigns it to a specific node
+2. Location in Cluster: Worker Nodes
+   1. Container Runtime `CRI`: Pulls container images, creates and manages containers, and ensures they run properly and securely as directed by the Kubernetes control plane
+   2. `kube-proxy`: A network proxy that runs on each node in a Kubernetes cluster, maintaining network rules and enabling communication between pods and services within the node and the control plane, while also communicating directly with the kube-apiserver
+   3. `kubelet`: An agent that runs on each node in a Kubernetes cluster, ensuring containers in a pod are running and healthy while communicating with the API server in the control plane to maintain the desired state of the node
 
 [Go 🆙](#table-of-contents)
