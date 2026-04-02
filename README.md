@@ -38,6 +38,7 @@
   - [Advanced Topics](#advanced-topics)
     - [Ways to Manage Kubernetes Pods](#ways-to-manage-kubernetes-pods)
     - [Running Stateful Workloads](#running-stateful-workloads)
+    - [Kubernetes Security](#kubernetes-security)
 
 ## Get Started
 
@@ -1133,5 +1134,261 @@ There are 3 different parts of the diagram:
 - There are *two* ways:
   1. **Setup a Database Independent of your Cluster** &mdash; Let's assume you've an application that uses MySQL for data persistence. You can either build and maintain a SQL database server that is separate from your cluster, OR, you can use a managed database service like Azure SQL, Amazon RDS, or Google Cloud SQL, and configure it to communicate with your cluster in kubernetes.
   2. **Kubernetes Persistent Volumes** &mdash; Persistent Volumes are a type of data storage that exist in your cluster, and remain, even after a pod is destroyed. You can use a kubenetes object, called a `StatefulSet`, to make sure your updated application can communicate with the same volume that was communicating with your previous pod.
+
+[Go 🆙](#table-of-contents)
+
+### Kubernetes Security
+
+- Like any set of servers on the internet, k8s is susceptible to attacks by malicious actors.
+- The kinds of threats against k8s clusters are always changing,
+- But there's a standard set of security best practices you can apply right away.
+
+What do hackers (malicious actors) want?
+
+1. **Steal Data** from inside the Cluster.
+2. **Harness Computation Power** of the Cluster => Uses: Cryptocurrency Mining
+3. **Distributed Denial of Service (DDoS) Attack** to ensure that the systems are full, and can't handle requests from actual customers.
+
+How to Mitigate Malicious Actors?
+
+1. Add `securityContext` info to your pods, just like how it's added to [`secure-deployment.yaml#L29-L35`](./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml#L29)
+   - If someone accesses your cluster and can remotely control a container, that person can create a security nightmare by installing new software, and using that program to mess with other things that are running in your cluster.
+   - You can prevent anything that requires such superuser level access (installing or updating software, etc) by adding 2 things to your container configuration:
+     1. `runAsNonRoot` &mdash; Ensure that your containers are run as non-root => by `kubectl exec -it <pod-name>`, you **cannot use any `sudo` based commands**, i.e., installation commands, permission commands, etc. In the YAML manifest, you've to define `securityContext.runAsNonRoot` to be `true` to not allow anyone who accesses the pod/container, is able to run any root commands.
+     2. `readOnlyRootFilesystem` &mdash; This makes your container's filesytem, Read-Only. To enable this behaviour, make `securityContext.readOnlyRootFilesystem` as `true`.
+   - An example can be seen here, the diff between [`deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml) and [`secure-deployment.yaml`](/Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml):
+
+     ```diff
+     diff --git a/./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml b/./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml
+     index 181cece..19593b0 100755
+     --- a/./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml
+     +++ b/./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml
+     @@ -26,6 +26,13 @@ spec:
+               limits:
+                 memory: "128Mi"
+                 cpu: "500m"
+     +        securityContext:
+     +          allowPrivilegeEscalation: false
+     +          runAsNonRoot: true
+     +          capabilities:
+     +            drop:
+     +              - ALL
+     +          readOnlyRootFilesystem: true
+             ports:
+             - containerPort: 3000
+             env:
+
+     ```
+
+2. Another kubernetes security practice is to a command line tool called [`snyk`](https://docs.snyk.io/developer-tools/snyk-cli/scan-and-maintain-projects-using-the-cli/snyk-cli-for-iac/test-your-iac-files/kubernetes-files).
+   - It's used to scan your k8s YAML manifest.
+   - `snyk` has a cli tool that can scan your IaC files, including Kubernetes Manifests (YAML files).
+     > Install `snyk` CLI tool using `npm`: `npm i -g snyk`
+   - To scan using `snyk`, provide it a k8s manifest like [`deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/03_03/deployment.yaml), you can run the following command:
+
+     ```sh
+     # Ensure that you're authenticated to run and use the snyk tool; If any error: `snyk auth` should do the trick.
+     snyk iac test /path/to/deployment.yaml
+     ```
+
+     O/P:
+
+     > ```terminal
+     > user@host:~ $ snyk iac test ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml 
+     >
+     > Snyk Infrastructure as Code
+     > 
+     > ✔ Test completed.
+     > 
+     > Issues
+     > 
+     > Low Severity Issues: 4
+     > 
+     >   [Low] Container's or Pod's  UID could clash with host's UID
+     >   Info:    `runAsUser` value is set to low UID. UID of the container processes
+     >           could clash with host's UIDs and lead to unintentional authorization
+     >           bypass
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-11
+     >   Path:    [DocId: 0] > input > spec > template > spec >
+     >           containers[pod-info-container] > securityContext > runAsUser
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Set `securityContext.runAsUser` value to greater or equal than
+     >           10'000. SecurityContext can be set on both `pod` and `container`
+     >           level. If both are set, then the container level takes precedence
+     > 
+     >   [Low] Container is running without liveness probe
+     >   Info:    Liveness probe is not defined. Kubernetes will not be able to detect
+     >           if application is able to service requests, and will not restart
+     >           unhealthy pods
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-41
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >           > livenessProbe
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Add `livenessProbe` attribute
+     > 
+     >   [Low] Container could be running with outdated image
+     >   Info:    The image policy does not prevent image reuse. The container may run
+     >           with outdated or unauthorized image
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-42
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >           > imagePullPolicy
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Set `imagePullPolicy` attribute to `Always`
+     > 
+     >   [Low] Container is running with writable root filesystem
+     >   Info:    `readOnlyRootFilesystem` attribute is not set to `true`. Compromised
+     >           process could abuse writable root filesystem to elevate privileges
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-8
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >           > securityContext > readOnlyRootFilesystem
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Set `spec.{containers,
+     >           initContainers}.securityContext.readOnlyRootFilesystem` to `true`
+     > 
+     > Medium Severity Issues: 3
+     > 
+     >   [Medium] Container or Pod is running without root user control
+     >   Info:    Container or Pod is running without root user control. Container or
+     >           Pod could be running with full administrative privileges
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-10
+     >   Path:    [DocId: 0] > input > spec > template > spec >
+     >           containers[pod-info-container] > securityContext > runAsNonRoot
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Set `securityContext.runAsNonRoot` to `true`
+     > 
+     >   [Medium] Container does not drop all default capabilities
+     >   Info:    All default capabilities are not explicitly dropped. Containers are
+     >           running with potentially unnecessary privileges
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-6
+     >   Path:    [DocId: 0] > input > spec > template > spec >
+     >           containers[pod-info-container] > securityContext > capabilities >
+     >           drop
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Add `ALL` to `securityContext.capabilities.drop` list, and add only
+     >           required capabilities in `securityContext.capabilities.add`
+     > 
+     >   [Medium] Container is running without privilege escalation control
+     >   Info:    `allowPrivilegeEscalation` attribute is not set to `false`. Processes
+     >           could elevate current privileges via known vectors, for example SUID
+     >           binaries
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-9
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >           > securityContext > allowPrivilegeEscalation
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.ya
+     >           ml
+     >   Resolve: Set `spec.{containers,
+     >           initContainers}.securityContext.allowPrivilegeEscalation` to `false`
+     > 
+     > -------------------------------------------------------
+     > 
+     > Test Summary
+     > 
+     >   Organization: ch-sriram
+     >   Project name: Ch-sriram/orchestration-k8s
+     > 
+     > ✔ Files without issues: 0
+     > ✗ Files with issues: 1
+     >   Ignored issues: 0
+     >   Total issues: 7 [ 0 critical, 0 high, 3 medium, 4 low ]
+     > 
+     > -------------------------------------------------------
+     > 
+     > Tip
+     > 
+     >   New: Share your test results in the Snyk Web UI with the option --report
+     > ```
+
+     If you look at the Medium Severities and their solutions:
+
+     1. [Medium] Container or Pod is running without root user control &mdash; the fix is given as **Resolve: Set `securityContext.runAsNonRoot` to `true`**.
+     2. [Medium] Container does not drop all default capabilities &mdash; the fix is given as **Resolve: Add `ALL` to `securityContext.capabilities.drop` list, and add only required capabilities in `securityContext.capabilities.add`**.
+     3. [Medium] Container is running without privilege escalation control &mdash; the fix is given as **Resolve: Set `spec.{containers, initContainers}.securityContext.allowPrivilegeEscalation` to `false`**.
+
+     > All of these issues are resolved in [`secure-deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml), which is a security hardened version of [`deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml).
+
+     Now, if we run the `snyk` test on [`secure-deployment.yaml`](./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml):
+
+     ```sh
+     snyk iac test /path/to/secure-deployment.yaml
+     ```
+
+     O/P:
+
+     > ```terminal
+     > $ snyk iac test ./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml 
+     > 
+     > Snyk Infrastructure as Code
+     > 
+     > ✔ Test completed.
+     > 
+     > Issues
+     > 
+     > Low Severity Issues: 3
+     > 
+     >   [Low] Container's or Pod's  UID could clash with host's UID
+     >   Info:    `runAsUser` value is set to low UID. UID of the container processes
+     >            could clash with host's UIDs and lead to unintentional authorization
+     >            bypass
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-11
+     >   Path:    [DocId: 0] > input > spec > template > spec >
+     >            containers[pod-info-container] > securityContext > runAsUser
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment
+     >            .yaml
+     >   Resolve: Set `securityContext.runAsUser` value to greater or equal than
+     >            10'000. SecurityContext can be set on both `pod` and `container`
+     >            level. If both are set, then the container level takes precedence
+     > 
+     >   [Low] Container is running without liveness probe
+     >   Info:    Liveness probe is not defined. Kubernetes will not be able to detect
+     >            if application is able to service requests, and will not restart
+     >            unhealthy pods
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-41
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >            > livenessProbe
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment
+     >            .yaml
+     >   Resolve: Add `livenessProbe` attribute
+     > 
+     >   [Low] Container could be running with outdated image
+     >   Info:    The image policy does not prevent image reuse. The container may run
+     >            with outdated or unauthorized image
+     >   Rule:    https://security.snyk.io/rules/cloud/SNYK-CC-K8S-42
+     >   Path:    [DocId: 0] > spec > template > spec > containers[pod-info-container]
+     >            > imagePullPolicy
+     >   File:    ./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment
+     >            .yaml
+     >   Resolve: Set `imagePullPolicy` attribute to `Always`
+     > 
+     > -------------------------------------------------------
+     > 
+     > Test Summary
+     > 
+     >   Organization: ch-sriram
+     >   Project name: Ch-sriram/orchestration-k8s
+     > 
+     > ✔ Files without issues: 0
+     > ✗ Files with issues: 1
+     >   Ignored issues: 0
+     >   Total issues: 3 [ 0 critical, 0 high, 0 medium, 3 low ]
+     > 
+     > -------------------------------------------------------
+     > 
+     > Tip
+     > 
+     >   New: Share your test results in the Snyk Web UI with the option --report
+     > ```
+
+     As you can see, there are no vulnerabilties now, and there's no need to harden the image further.
+     > NOTE: The liveness probe, and other issues can be resolved once those concepts are introduced.
+
+3. The final thing for security hardening is to:
+   - Regularly update the version of kubernetes you're using, and the most important updates to make are when security patches and updates are released. You can follow the [OpenCVE](https://app.opencve.io/cve/?vendor=kubernetes) page, which reports the known kubernetes security flaws, as well as when the fixes are released.
+   - To learn more about kubernetes security, take a look into [Kubernetes Hardening Guide by NSA &mdash; Released by Dept. of War](https://media.defense.gov/2022/Aug/29/2003066362/-1/-1/0/CTR_KUBERNETES_HARDENING_GUIDANCE_1.2_20220829.PDF).
 
 [Go 🆙](#table-of-contents)

@@ -1,0 +1,18 @@
+diff --git a/./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml b/./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml
+index 181cece..19593b0 100755
+--- a/./Ex_Files_Learning_Kubernetes/Exercise_Files/04_02_End/deployment.yaml
++++ b/./Ex_Files_Learning_Kubernetes/Exercise_Files/06_03/secure-deployment.yaml
+@@ -26,6 +26,13 @@ spec:
+           limits:
+             memory: "128Mi"
+             cpu: "500m"
++        securityContext:
++          allowPrivilegeEscalation: false
++          runAsNonRoot: true
++          capabilities:
++            drop:
++              - ALL
++          readOnlyRootFilesystem: true
+         ports:
+         - containerPort: 3000
+         env:
